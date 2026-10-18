@@ -189,9 +189,17 @@ if (clientArchitecture === 'renderer-v2' && !connectionSource.includes('transpor
 
 const settingsSource = await text('packages/client/ui-settings/src/client/index.ts')
 const settingsTrustOwners = await searchPackage('packages/client/ui-settings/src', 'isLoopback')
-if (settingsTrustOwners.length === 0) {
+// Two shapes have shipped for the same question, "may this page persist settings?".
+// Up to 0.2.0 the client asked `ctx.connection.isLoopback`, which the mobile
+// gateway spoofs for an authenticated device. From 0.2.1 the page persists
+// through `remote.settings` and the Host decides, so the hint is no longer read;
+// the spoof stays in place for the older hosts we still declare support for.
+// Neither shape present means the settings page moved again and this gateway has
+// not been taught its new trust path.
+const settingsPersistsThroughRemote = settingsSource.includes("'remote.settings'")
+if (settingsTrustOwners.length === 0 && !settingsPersistsThroughRemote) {
   throw new Error(
-    `DSH settings trust contract changed: ${root.version} no longer asks the connected Host about isLoopback (searched packages/client/ui-settings/src)`
+    `DSH settings trust contract changed: ${root.version} neither asks about isLoopback nor persists through remote.settings (searched packages/client/ui-settings/src)`
   )
 }
 
