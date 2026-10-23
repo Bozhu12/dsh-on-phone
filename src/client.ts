@@ -904,6 +904,12 @@ export const SIDEBAR_ALIGN_STYLES = `
 :is([data-dsh-on-phone-sidebar],[class*="_sidebarCol"]) :is([class*="_panelRow"],[class*="_projectRow"],[class*="_sessionRow"],[class*="_newSession"]){box-sizing:border-box!important;width:100%!important;max-width:100%!important;min-width:0!important;min-height:36px!important;padding-left:8px!important;padding-right:8px!important;margin-inline:0!important}
 :is([data-dsh-on-phone-sidebar],[class*="_sidebarCol"]) :is([class*="_title"],[class*="_projectText"],[class*="_panelTitle"]){min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
 :is([data-dsh-on-phone-sidebar],[class*="_sidebarCol"]) [class*="_newSession"]{height:36px!important}
+/* The shortcut hint (Ctrl+Alt+N) stretches to the full row and squeezes the
+   label to ~16px, so the button reads as a clipped glyph instead of 新会话.
+   The hint is decoration; the label is the control. */
+:is([data-dsh-on-phone-sidebar],[class*="_sidebarCol"]) [class*="_newSessionShortcut"]{display:none!important}
+:is([data-dsh-on-phone-sidebar],[class*="_sidebarCol"]) [class*="_newSessionLabelMask"]{flex:0 0 auto!important;width:auto!important}
+:is([data-dsh-on-phone-sidebar],[class*="_sidebarCol"]) [class*="_newSessionLabel"]{width:auto!important;min-width:0!important;overflow:visible!important;white-space:nowrap!important}
 `
 
 const CONTROL_STYLES = `
