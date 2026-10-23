@@ -901,7 +901,7 @@ export const SIDEBAR_ALIGN_STYLES = `
 :is([data-dsh-on-phone-sidebar],[class*="_sidebarCol"]) :is([class*="_regionArea"],[class*="_listArea"],[class*="_list"],[class*="_treeBody"],[class*="_groupSection"],[class*="_panelList"]){box-sizing:border-box!important;min-width:0!important;max-width:100%!important}
 :is([data-dsh-on-phone-sidebar],[class*="_sidebarCol"]) :is([class*="_regionArea"],[class*="_list"],[class*="_panelList"]){margin-inline:0!important;padding-inline:0!important;overflow-x:hidden!important;scrollbar-gutter:auto!important}
 :is([data-dsh-on-phone-sidebar],[class*="_sidebarCol"]) [class*="_regionArea"] [class*="_root"]{padding-right:0!important}
-:is([data-dsh-on-phone-sidebar],[class*="_sidebarCol"]) :is([class*="_panelRow"],[class*="_projectRow"],[class*="_sessionRow"],[class*="_newSession"]){box-sizing:border-box!important;width:100%!important;max-width:100%!important;min-width:0!important;min-height:36px!important;padding-left:8px!important;padding-right:8px!important;margin-inline:0!important}
+:is([data-dsh-on-phone-sidebar],[class*="_sidebarCol"]) :is([class*="_panelRow"],[class*="_projectRow"],[class*="_sessionRow"],[class*="_newSession"]){box-sizing:border-box!important;width:100%!important;max-width:100%!important;min-width:0!important;min-height:36px!important;margin-inline:0!important}
 :is([data-dsh-on-phone-sidebar],[class*="_sidebarCol"]) :is([class*="_title"],[class*="_projectText"],[class*="_panelTitle"]){min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
 :is([data-dsh-on-phone-sidebar],[class*="_sidebarCol"]) [class*="_newSession"]{height:36px!important}
 /* The shortcut hint (Ctrl+Alt+N) stretches to the full row and squeezes the

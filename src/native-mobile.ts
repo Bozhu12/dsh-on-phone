@@ -42,12 +42,21 @@ html.dsh-native-mobile-active { -webkit-text-size-adjust:100%; text-size-adjust:
      and its rows measured 34px/32px against the panels' 36px — glyphs stepped
      sideways and the list looked ragged. Every row takes one inset, one width
      and a 36px height, and both lists span the drawer's content box. */
-  html.dsh-native-mobile-active [data-dsh-on-phone-sidebar] :is([class*="_panelList"],[class*="_listArea"],[class*="_list"],[class*="_treeBody"],[class*="_groupSection"],[class*="_regionArea"]) {
+  html.dsh-native-mobile-active [data-dsh-on-phone-sidebar] :is([class*="_panelList"],[class*="_listArea"],[class*="_list"],[class*="_treeBody"],[class*="_regionArea"]) {
     box-sizing:border-box !important;
     width:100% !important;
     min-width:0 !important;
     padding-inline:0 !important;
     margin-inline:0 !important;
+  }
+  /* Keep the tree's own indent variable: it is what encodes the hierarchy. */
+  html.dsh-native-mobile-active [data-dsh-on-phone-sidebar] [class*="_groupSection"] {
+    box-sizing:border-box !important;
+    width:100% !important;
+    min-width:0 !important;
+    margin-inline:0 !important;
+    padding-left:var(--dsh-workspace-indent,0px) !important;
+    padding-right:0 !important;
   }
   /* The workspace root reserved 12px on the right that the panel list never
      had, and its scroller reserves a stable scrollbar gutter; drop both so
@@ -58,8 +67,6 @@ html.dsh-native-mobile-active { -webkit-text-size-adjust:100%; text-size-adjust:
   html.dsh-native-mobile-active [data-dsh-on-phone-sidebar] :is([class*="_panelRow"],[class*="_projectRow"],[class*="_sessionRow"],[class*="_newSession"]) {
     box-sizing:border-box !important;
     min-height:36px !important;
-    padding-left:8px !important;
-    padding-right:8px !important;
     margin-inline:0 !important;
   }
   [data-dsh-on-phone-frame] { grid-template-columns:0 minmax(0,1fr) 0 !important; width:100% !important; height:100dvh !important; overflow:hidden !important; }
