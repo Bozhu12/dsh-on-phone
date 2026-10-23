@@ -886,6 +886,26 @@ async function refreshCssLegacy(style: HTMLStyleElement, signal?: AbortSignal): 
   } catch { return false }
 }
 
+/**
+ * Sidebar row alignment, installed on BOTH surfaces.
+ *
+ * The stock sidebar breaks in two ways at any surface: rows carry three
+ * different heights (36px panel rows against 34px workspace rows and 32px
+ * session rows), the panel rows keep a 2px margin the tree rows do not, and a
+ * long session title pushes the tree wider than the column — the drawer then
+ * clips the row ends (measured on 0.8.13: sidebar 280px, rows 392px). These
+ * are pure repairs, not a visual redesign, so the desktop surface gets them
+ * too; the sweep is scoped to the sidebar's own column/drawer.
+ */
+export const SIDEBAR_ALIGN_STYLES = `
+:is([data-dsh-on-phone-sidebar],[class*="_sidebarCol"]) :is([class*="_regionArea"],[class*="_listArea"],[class*="_list"],[class*="_treeBody"],[class*="_groupSection"],[class*="_panelList"]){box-sizing:border-box!important;min-width:0!important;max-width:100%!important}
+:is([data-dsh-on-phone-sidebar],[class*="_sidebarCol"]) :is([class*="_regionArea"],[class*="_list"],[class*="_panelList"]){margin-inline:0!important;padding-inline:0!important;overflow-x:hidden!important;scrollbar-gutter:auto!important}
+:is([data-dsh-on-phone-sidebar],[class*="_sidebarCol"]) [class*="_regionArea"] [class*="_root"]{padding-right:0!important}
+:is([data-dsh-on-phone-sidebar],[class*="_sidebarCol"]) :is([class*="_panelRow"],[class*="_projectRow"],[class*="_sessionRow"],[class*="_newSession"]){box-sizing:border-box!important;width:100%!important;max-width:100%!important;min-width:0!important;min-height:36px!important;padding-left:8px!important;padding-right:8px!important;margin-inline:0!important}
+:is([data-dsh-on-phone-sidebar],[class*="_sidebarCol"]) :is([class*="_title"],[class*="_projectText"],[class*="_panelTitle"]){min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+:is([data-dsh-on-phone-sidebar],[class*="_sidebarCol"]) [class*="_newSession"]{height:36px!important}
+`
+
 const CONTROL_STYLES = `
 .dsh-on-phone-control{position:fixed;z-index:1000;left:16px;bottom:112px;font:14px/1.45 system-ui;color:var(--dsw-alias-label-primary,#16181d)}
 .dsh-on-phone-control__panel{box-sizing:border-box;width:min(var(--dsh-on-phone-control-panel-width,380px),calc(100vw - 16px));max-height:var(--dsh-on-phone-control-panel-height,calc(100vh - 140px));overflow-y:auto;padding:16px;border:1px solid var(--dsw-alias-border-subtle,#e1e5eb);border-radius:18px;background:var(--dsw-alias-bg-layer-2,#fff);box-shadow:0 18px 50px rgb(15 23 42 / 18%)}
@@ -990,6 +1010,11 @@ export function apply(ctx: ClientContext): void {
       ? NATIVE_MOBILE_STYLES
       : CONTROL_STYLES
     document.head.append(style)
+    // Row alignment repairs apply on every surface (see SIDEBAR_ALIGN_STYLES).
+    const alignStyle = element('style')
+    alignStyle.dataset.plugin = 'dsh-on-phone-rowalign'
+    alignStyle.textContent = SIDEBAR_ALIGN_STYLES
+    document.head.append(alignStyle)
     // The two layout families cannot hot-swap, but the browser restores its
     // last window size on restart — a session that starts on one side of the
     // breakpoint and gets resized across it must follow. The reloaded page
@@ -1028,7 +1053,7 @@ export function apply(ctx: ClientContext): void {
       return () => {
         window.removeEventListener('resize', onViewportSurfaceChange)
         if (surfaceReloadTimer !== 0) window.clearTimeout(surfaceReloadTimer)
-        removeCustom(); removeSurface(); stopOpenGuard(); style.remove()
+        removeCustom(); removeSurface(); stopOpenGuard(); style.remove(); alignStyle.remove()
       }
     }
     const control = installControl()
@@ -1043,7 +1068,7 @@ export function apply(ctx: ClientContext): void {
     return () => {
       window.removeEventListener('resize', onViewportSurfaceChange)
       if (surfaceReloadTimer !== 0) window.clearTimeout(surfaceReloadTimer)
-      disposeSlot(); control.remove(); style.remove()
+      disposeSlot(); control.remove(); style.remove(); alignStyle.remove()
     }
   }, 'dsh-on-phone: stock mobile adaptation and local control')
 }
