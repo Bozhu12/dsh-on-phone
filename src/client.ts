@@ -909,7 +909,8 @@ export const SIDEBAR_ALIGN_STYLES = `
    The hint is decoration; the label is the control. */
 :is([data-dsh-on-phone-sidebar],[class*="_sidebarCol"]) [class*="_newSessionShortcut"]{display:none!important}
 :is([data-dsh-on-phone-sidebar],[class*="_sidebarCol"]) [class*="_newSessionLabelMask"]{flex:0 0 auto!important;width:auto!important}
-:is([data-dsh-on-phone-sidebar],[class*="_sidebarCol"]) [class*="_newSessionLabel"]{width:auto!important;min-width:0!important;overflow:visible!important;white-space:nowrap!important}
+:is([data-dsh-on-phone-sidebar],[class*="_sidebarCol"]) [class*="_newSessionContent"]{align-items:center!important}
+:is([data-dsh-on-phone-sidebar],[class*="_sidebarCol"]) [class*="_newSessionLabel"]{display:inline-flex!important;align-items:center!important;height:36px!important;line-height:1!important;width:auto!important;min-width:0!important;overflow:visible!important;white-space:nowrap!important}
 `
 
 const CONTROL_STYLES = `

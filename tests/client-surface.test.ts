@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isPhoneDevice, NARROW_PHONE_BREAKPOINT, resolveClientSurface, shouldUsePhoneSurface } from '../src/client.js'
+import { isPhoneDevice, NARROW_PHONE_BREAKPOINT, resolveClientSurface, SIDEBAR_ALIGN_STYLES, shouldUsePhoneSurface } from '../src/client.js'
 
 const surface = (input: Partial<Parameters<typeof resolveClientSurface>[0]>): string =>
   resolveClientSurface({ protocol: 'http:', hostname: '127.0.0.1', search: '', trustedGateway: false, dedicatedFrontend: undefined, ...input })
@@ -41,6 +41,20 @@ describe('client surface selection', () => {
     expect(surface({ search: '?foo=1&dsh-on-phone-preview=1' })).toBe('mobile')
     // The pre-rename spelling still opens the phone preview.
     expect(surface({ protocol: 'dsh-app:', hostname: 'app', search: '?dsh-mobile-preview' })).toBe('mobile')
+  })
+
+  it('keeps the sidebar alignment sheet syntactically clean', () => {
+    // A single stray quote inside a rule value starts an unterminated CSS
+    // string and silently swallows the rules that follow it (it cost us the
+    // new-session height and shortcut rules once). Quotes belong only in the
+    // attribute selectors, where they always come in pairs.
+    const quotes = (SIDEBAR_ALIGN_STYLES.match(/"/g) ?? []).length
+    expect(quotes % 2).toBe(0)
+    expect(SIDEBAR_ALIGN_STYLES).not.toContain("'")
+    // The rules that were swallowed must stay present and adjacent to a brace.
+    expect(SIDEBAR_ALIGN_STYLES).toContain('{height:36px!important}')
+    expect(SIDEBAR_ALIGN_STYLES).toContain('_newSessionShortcut"]{display:none!important}')
+    expect(SIDEBAR_ALIGN_STYLES).toContain('_newSessionLabel"]{display:inline-flex!important;align-items:center!important;height:36px!important')
   })
 
   it('does not treat an unrelated marker value as the gateway frontend', () => {
