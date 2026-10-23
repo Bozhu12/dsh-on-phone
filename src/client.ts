@@ -990,6 +990,32 @@ export function apply(ctx: ClientContext): void {
       ? NATIVE_MOBILE_STYLES
       : CONTROL_STYLES
     document.head.append(style)
+    // The two layout families cannot hot-swap, but the browser restores its
+    // last window size on restart — a session that starts on one side of the
+    // breakpoint and gets resized across it must follow. The reloaded page
+    // recomputes the same answer, so no reload loop is possible.
+    let surfaceReloadTimer = 0
+    const onViewportSurfaceChange = (): void => {
+      if (surfaceReloadTimer !== 0) window.clearTimeout(surfaceReloadTimer)
+      surfaceReloadTimer = window.setTimeout(() => {
+        surfaceReloadTimer = 0
+        const nowMobile = shouldUsePhoneSurface({
+          surface: resolveClientSurface({
+            protocol: location.protocol,
+            hostname: location.hostname,
+            search: location.search,
+            trustedGateway: window.__DSH_ON_PHONE_TRUSTED_GATEWAY__ === true,
+            dedicatedFrontend: window.__DSH_ON_PHONE_FRONTEND__,
+          }),
+          preview: new URLSearchParams(location.search).has('dsh-on-phone-preview') || new URLSearchParams(location.search).has('dsh-mobile-preview'),
+          width: window.innerWidth,
+          protocol: location.protocol,
+          query: query => window.matchMedia(query).matches,
+        })
+        if (nowMobile !== mobileSurface) location.reload()
+      }, 250)
+    }
+    window.addEventListener('resize', onViewportSurfaceChange)
     if (mobileSurface) {
       const removeCustom = installCustomAssets()
       const removeSurface = installNativeMobileSurface()
@@ -999,7 +1025,11 @@ export function apply(ctx: ClientContext): void {
       // mid-open — which is the state the view never leaves. No reload, no
       // socket rebuild.
       const stopOpenGuard = installSessionOpenGuardSafely(ctx)
-      return () => { removeCustom(); removeSurface(); stopOpenGuard(); style.remove() }
+      return () => {
+        window.removeEventListener('resize', onViewportSurfaceChange)
+        if (surfaceReloadTimer !== 0) window.clearTimeout(surfaceReloadTimer)
+        removeCustom(); removeSurface(); stopOpenGuard(); style.remove()
+      }
     }
     const control = installControl()
     const disposeSlot = ctx.slots.inject('sidebar.footer.action', () => ctx.slots.register<{ wide: boolean }>({ name: 'sidebar.footer.action', id: 'dsh-on-phone' }, ({ wide }) => createElement('button', {
@@ -1010,7 +1040,11 @@ export function apply(ctx: ClientContext): void {
       title: '移动访问',
       onClick: control.toggle,
     }, createElement('span', { 'aria-hidden': true, className: 'dsh-on-phone-control__trigger-icon' }), wide ? createElement('span', { className: 'dsh-on-phone-control__trigger-label' }, '移动访问') : undefined)))
-    return () => { disposeSlot(); control.remove(); style.remove() }
+    return () => {
+      window.removeEventListener('resize', onViewportSurfaceChange)
+      if (surfaceReloadTimer !== 0) window.clearTimeout(surfaceReloadTimer)
+      disposeSlot(); control.remove(); style.remove()
+    }
   }, 'dsh-on-phone: stock mobile adaptation and local control')
 }
 
