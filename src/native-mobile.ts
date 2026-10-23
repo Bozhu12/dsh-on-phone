@@ -37,6 +37,31 @@ html.dsh-native-mobile-active { -webkit-text-size-adjust:100%; text-size-adjust:
   html.dsh-native-mobile-active [data-dsh-on-phone-sidebar] [role="treeitem"][aria-expanded] [class*="_rowActions"] button:has(path[d^="M8 5V11"]) { display:inline-flex !important; }
   html.dsh-native-mobile-active [data-dsh-on-phone-sidebar] [role="treeitem"][aria-selected] [class*="_rowActions"] button:has(path[d^="M3 9C3.55228"]) { display:inline-flex !important; }
   html.dsh-native-mobile-active [data-dsh-on-phone-sidebar] [class*="_sessionRow"] [class*="_rowActions"] button:has(path[d^="M3 9C3.55228"]) { display:inline-flex !important; }
+  /* One icon column, one row rhythm. The panel rows carried margin-left:2px
+     and their list no inset, while the tree list is 4px padded/-4px margined
+     and its rows measured 34px/32px against the panels' 36px — glyphs stepped
+     sideways and the list looked ragged. Every row takes one inset, one width
+     and a 36px height, and both lists span the drawer's content box. */
+  html.dsh-native-mobile-active [data-dsh-on-phone-sidebar] :is([class*="_panelList"],[class*="_listArea"],[class*="_list"],[class*="_treeBody"],[class*="_groupSection"],[class*="_regionArea"]) {
+    box-sizing:border-box !important;
+    width:100% !important;
+    min-width:0 !important;
+    padding-inline:0 !important;
+    margin-inline:0 !important;
+  }
+  /* The workspace root reserved 12px on the right that the panel list never
+     had, and its scroller reserves a stable scrollbar gutter; drop both so
+     both lists end on the same edge. The region slot wrapper is
+     display:contents, hence the descendant (not child) selector. */
+  html.dsh-native-mobile-active [data-dsh-on-phone-sidebar] [class*="_regionArea"] [class*="_root"] { padding-right:0 !important; }
+  html.dsh-native-mobile-active [data-dsh-on-phone-sidebar] [class*="_list"] { scrollbar-gutter:auto !important; }
+  html.dsh-native-mobile-active [data-dsh-on-phone-sidebar] :is([class*="_panelRow"],[class*="_projectRow"],[class*="_sessionRow"],[class*="_newSession"]) {
+    box-sizing:border-box !important;
+    min-height:36px !important;
+    padding-left:8px !important;
+    padding-right:8px !important;
+    margin-inline:0 !important;
+  }
   [data-dsh-on-phone-frame] { grid-template-columns:0 minmax(0,1fr) 0 !important; width:100% !important; height:100dvh !important; overflow:hidden !important; }
   [data-dsh-on-phone-center] { grid-column:2 !important; width:100% !important; max-width:100% !important; min-width:0 !important; }
   [data-dsh-on-phone-center] > * { min-width:0 !important; }
