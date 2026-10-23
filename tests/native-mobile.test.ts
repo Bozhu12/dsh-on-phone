@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { BACKDROP_SETTLE_MS, HISTORY_FILL_INTERVAL_MS, HISTORY_FILL_MAX_PAGES, HISTORY_FILL_MAX_STALLS, HISTORY_TOP_RETRY_MS, NATIVE_MOBILE_STYLES, drawerBackgroundColor, findDetailsSheetHost, findRightPanelHost, isComposerEditorFocus, isMenuSearchFocus, nextSyncDelay, preservesMenuFocus, rightColumnOpen, rightPanelOpen, selectsSidebarRow, shouldAutoLoadEarlier, shouldFillEarlierHistory, shouldRetryEarlierHistory } from '../src/native-mobile.js'
+import { BACKDROP_SETTLE_MS, HISTORY_FILL_INTERVAL_MS, HISTORY_FILL_MAX_PAGES, HISTORY_FILL_MAX_STALLS, HISTORY_TOP_RETRY_MS, NATIVE_MOBILE_STYLES, augmentMoreMenu, drawerBackgroundColor, findDetailsSheetHost, findRightPanelHost, isComposerEditorFocus, isMenuSearchFocus, nextSyncDelay, preservesMenuFocus, rightColumnOpen, rightPanelOpen, selectsSidebarRow, shouldAutoLoadEarlier, shouldFillEarlierHistory, shouldRetryEarlierHistory } from '../src/native-mobile.js'
 
 /** Minimal stand-in for an element whose `closest` resolves to a fixed match. */
 function fakeElement(closest: Element | null): Element {
@@ -97,6 +97,10 @@ function fakeFocusTarget(matches: boolean, inComposer: boolean, inMenu = false):
 
 describe('native mobile presentation', () => {
   it('keeps touch focus quiet without removing keyboard focus globally', () => {
+    expect(NATIVE_MOBILE_STYLES).toContain('[data-dsh-on-phone-sidebar] [class*="_rowActions"] button { display:none !important; }')
+    expect(NATIVE_MOBILE_STYLES).toContain('[role="treeitem"][aria-expanded] [class*="_rowActions"] button:has(path[d^="M8 5V11"])')
+    expect(NATIVE_MOBILE_STYLES).toContain('[role="treeitem"][aria-selected] [class*="_rowActions"] button:has(path[d^="M3 9C3.55228"])')
+    expect(NATIVE_MOBILE_STYLES).toContain('[class*="_sessionRow"] [class*="_rowActions"] button:has(path[d^="M3 9C3.55228"])')
     expect(NATIVE_MOBILE_STYLES).toContain('-webkit-tap-highlight-color:transparent')
     expect(NATIVE_MOBILE_STYLES).toContain('data-dsh-on-phone-input="touch"')
     expect(NATIVE_MOBILE_STYLES).toContain('[data-dsh-on-phone-sidebar] [role="treeitem"] { -webkit-tap-highlight-color:transparent; touch-action:manipulation; }')
@@ -122,6 +126,64 @@ describe('native mobile presentation', () => {
     expect(NATIVE_MOBILE_STYLES).not.toContain('[data-dsh-on-phone-toggle] svg { display:none !important; }')
     expect(NATIVE_MOBILE_STYLES).not.toContain('[data-dsh-on-phone-toggle]::after')
     expect(NATIVE_MOBILE_STYLES).not.toContain('html.dsh-native-mobile-active :focus { outline:none')
+  })
+
+  it('hides the header tab row outright on the phone surface', () => {
+    // The phone only shows the conversation view, so 对话/轨迹 are dead weight.
+    expect(NATIVE_MOBILE_STYLES).toContain('[data-dsh-on-phone-header] [class*="_tabs"] { display:none !important; }')
+    expect(NATIVE_MOBILE_STYLES).toContain('[data-dsh-on-phone-header] [class*="_titleRow"] { min-height:28px !important; height:28px !important; }')
+    expect(NATIVE_MOBILE_STYLES).not.toContain('[data-dsh-on-phone-header] > div:has(> [class*="_tabs"])')
+  })
+
+  it('declutters the header and keeps controls on one centered line', () => {
+    // Model quick-switch duplicates the composer trigger; the right column has
+    // its own fixed toggle cluster — both drop out of the header.
+    expect(NATIVE_MOBILE_STYLES).toContain('[data-dsh-on-phone-header] [class*="_menuAnchor"] { display:none !important; }')
+    expect(NATIVE_MOBILE_STYLES).toContain('[data-dsh-on-phone-header] [data-dsh-bottom-toggle] { display:none !important; }')
+    expect(NATIVE_MOBILE_STYLES).toContain('[data-dsh-on-phone-header] [class*="_headerCorner"] { display:none !important; }')
+    expect(NATIVE_MOBILE_STYLES).toContain('[data-dsh-on-phone-header] :is([class*="_headerActions"],[class*="_headerUtilities"],[class*="_titleCluster"]) { align-items:center !important; height:28px !important; }')
+    expect(NATIVE_MOBILE_STYLES).toContain('[data-dsh-on-phone-header] [class*="_headerUtilities"] button')
+    expect(NATIVE_MOBILE_STYLES).toContain('height:28px !important')
+    expect(NATIVE_MOBILE_STYLES).toContain('[data-dsh-on-phone-header] [class*="_moreButton"] { width:28px !important; min-width:28px !important; }')
+  })
+
+  it('compresses the header height and pushes actions right for the title', () => {
+    // The app forces min-height:76px; the phone layer pins the bar to 44px.
+    expect(NATIVE_MOBILE_STYLES).toContain('[data-dsh-on-phone-header] { min-height:0 !important; height:44px !important; box-sizing:border-box !important; align-content:center !important; }')
+    // Crumb takes the free width; team/mode labels collapse to bare icons.
+    expect(NATIVE_MOBILE_STYLES).toContain('[data-dsh-on-phone-header] [class*="_crumbs"] { flex:1 1 auto !important; min-width:0 !important; }')
+    expect(NATIVE_MOBILE_STYLES).toContain('[data-dsh-on-phone-header] [class*="_headerActions"] { flex:none !important; margin-left:0 !important; padding:0 !important; gap:0 !important; }')
+    expect(NATIVE_MOBILE_STYLES).toContain('[data-dsh-on-phone-header] [class*="_headerActions"] button { padding:0 !important; }')
+    expect(NATIVE_MOBILE_STYLES).toContain('[data-dsh-on-phone-header] [data-dsh-token-monitor-session-cost] { margin-right:0 !important; }')
+    expect(NATIVE_MOBILE_STYLES).toContain('[data-dsh-on-phone-header] [class*="_headerActions"] [class*="_triggerLabel"] { display:none !important; }')
+    expect(NATIVE_MOBILE_STYLES).toContain('[data-dsh-on-phone-header] [class*="_headerActions"] span[class*="_label"] { font-size:0 !important; }')
+    expect(NATIVE_MOBILE_STYLES).toContain('[data-dsh-on-phone-header] [data-dsh-token-monitor-session-cost] { display:none !important; }')
+  })
+
+  it('refolds the hidden header controls into the ··· menu as forwarded items', () => {
+    // The items are plain DOM buttons appended to the app's portal menu; their
+    // clicks are forwarded to the hidden header controls, then Escape closes.
+    expect(NATIVE_MOBILE_STYLES).toContain('[data-dsh-on-phone-more-item]')
+    expect(NATIVE_MOBILE_STYLES).toContain('font-size:13px !important')
+    expect(augmentMoreMenu).toBeTypeOf('function')
+  })
+
+  it('collapses the status dock behind a header pill that opens a floating card', () => {
+    // Hidden by default — the doubled attribute out-specifies the base grid rule.
+    expect(NATIVE_MOBILE_STYLES).toContain('[data-dsh-on-phone-center] [data-dsh-on-phone-dock][data-dsh-on-phone-dock] { display:none !important; }')
+    // Open state floats the dock as a card above the composer; the explicit
+    // display:grid out-specifies the collapsed hide (which comes later).
+    expect(NATIVE_MOBILE_STYLES).toContain('[data-dsh-on-phone-center][data-dsh-on-phone-dock-open="true"] [data-composer-card] ~ [class*="_dock"] {\n  display:grid !important;')
+    expect(NATIVE_MOBILE_STYLES).toContain('border-radius:16px !important')
+    expect(NATIVE_MOBILE_STYLES).toContain('[data-dsh-on-phone-dock-toggle]')
+    expect(NATIVE_MOBILE_STYLES).toContain('[data-dsh-on-phone-center][data-dsh-on-phone-dock-open="true"] [data-dsh-on-phone-dock-toggle]')
+  })
+
+  it('collapses the sidebar quick entries behind one toggle row', () => {
+    expect(NATIVE_MOBILE_STYLES).toContain('[data-dsh-on-phone-sidebar-root][data-dsh-on-phone-panels="collapsed"] :is([class*="_newSession"],[class*="_panelList"]) { display:none !important; }')
+    expect(NATIVE_MOBILE_STYLES).toContain('[data-dsh-on-phone-panels-toggle]')
+    expect(NATIVE_MOBILE_STYLES).toContain('[data-dsh-on-phone-sidebar-root][data-dsh-on-phone-panels="collapsed"] [data-dsh-on-phone-panels-toggle]::after')
+    expect(NATIVE_MOBILE_STYLES).toContain('@media (prefers-reduced-motion:reduce) { [data-dsh-on-phone-panels-toggle]::after { transition:none !important; } }')
   })
 
   it('stacks narrow settings and conversation metadata instead of squeezing text', () => {

@@ -28,6 +28,15 @@ html.dsh-native-mobile-active { -webkit-text-size-adjust:100%; text-size-adjust:
   html.dsh-native-mobile-active [data-dsh-on-phone-sidebar] [class*="_rowActions"] { display:inline-flex !important; align-items:center !important; gap:8px !important; }
   html.dsh-native-mobile-active [data-dsh-on-phone-sidebar] [class*="_sessionRow"] [class*="_time"] { display:none !important; }
   html.dsh-native-mobile-active [data-dsh-on-phone-sidebar] [class*="_rowActions"] button { box-sizing:border-box !important; width:32px !important; min-width:32px !important; height:32px !important; min-height:32px !important; }
+  /* Row-end icon trim: too many icons crowd the 340px drawer. A workspace
+     (project) header keeps only the add (+) action -- it is the treeitem with
+     aria-expanded; a session row keeps only the more (ellipsis) action (its
+     svg paths start M3 9C3.55228...); everything else (delete, pin, ...)
+     hides. The actions stay reachable through the row's more menu. */
+  html.dsh-native-mobile-active [data-dsh-on-phone-sidebar] [class*="_rowActions"] button { display:none !important; }
+  html.dsh-native-mobile-active [data-dsh-on-phone-sidebar] [role="treeitem"][aria-expanded] [class*="_rowActions"] button:has(path[d^="M8 5V11"]) { display:inline-flex !important; }
+  html.dsh-native-mobile-active [data-dsh-on-phone-sidebar] [role="treeitem"][aria-selected] [class*="_rowActions"] button:has(path[d^="M3 9C3.55228"]) { display:inline-flex !important; }
+  html.dsh-native-mobile-active [data-dsh-on-phone-sidebar] [class*="_sessionRow"] [class*="_rowActions"] button:has(path[d^="M3 9C3.55228"]) { display:inline-flex !important; }
   [data-dsh-on-phone-frame] { grid-template-columns:0 minmax(0,1fr) 0 !important; width:100% !important; height:100dvh !important; overflow:hidden !important; }
   [data-dsh-on-phone-center] { grid-column:2 !important; width:100% !important; max-width:100% !important; min-width:0 !important; }
   [data-dsh-on-phone-center] > * { min-width:0 !important; }
@@ -365,6 +374,128 @@ html.dsh-native-mobile-active [data-dsh-on-phone-header] [class*="_sessionLogBut
     -webkit-overflow-scrolling:touch !important;
   }
 }
+/* ---- Phone surface density pass -------------------------------------
+   Three regions ate vertical space the conversation needs: the header's
+   second row (对话/轨迹 tabs), the status dock under the composer, and the
+   sidebar's quick-entry block. The header folds onto one row; the dock
+   collapses behind a header pill that opens it as a floating card; the
+   sidebar quick entries collapse behind their own toggle (the brand row
+   still starts a session, so collapsing loses nothing). */
+[data-dsh-on-phone-header] { padding-top:max(2px,env(safe-area-inset-top)) !important; }
+/* The phone surface only ever shows the conversation view, so the 对话/轨迹
+   tab row is dead weight: hide it outright instead of folding it inline. */
+[data-dsh-on-phone-header] [class*="_tabs"] { display:none !important; }
+[data-dsh-on-phone-header] [class*="_titleRow"] { min-height:28px !important; height:28px !important; }
+/* Header declutter: the model quick-switch is redundant with the composer's
+   own model trigger, and the right column already opens from its fixed toggle
+   cluster — both leave the header; the ··· (更多操作) menu keeps its place.
+   The open-in-finder split and the bottom-panel toggle are folded into that
+   menu too (the layer re-injects them as menu items when it opens), so the
+   header keeps exactly: crumbs/balance · 统计 · ···. */
+[data-dsh-on-phone-header] [class*="_menuAnchor"] { display:none !important; }
+[data-dsh-on-phone-header] [data-dsh-bottom-toggle] { display:none !important; }
+[data-dsh-on-phone-header] [class*="_headerCorner"] { display:none !important; }
+/* Compact height: the app forces min-height:76px on the header; the phone
+   layer pins the whole bar to 44px with the single 28px line centered. */
+[data-dsh-on-phone-header] { min-height:0 !important; height:44px !important; box-sizing:border-box !important; align-content:center !important; }
+[data-dsh-on-phone-header] [class*="_headerLeading"] { min-height:0 !important; height:auto !important; }
+/* Title first: the crumb takes the free width; the actions cluster (team
+   button, mode label, balance) hugs the right edge as compact icons. */
+[data-dsh-on-phone-header] [class*="_titleRow"] { display:flex !important; width:100% !important; }
+[data-dsh-on-phone-header] [class*="_titleCluster"] { display:flex !important; align-items:center !important; flex:1 1 auto !important; min-width:0 !important; }
+[data-dsh-on-phone-header] [class*="_crumbs"] { flex:1 1 auto !important; min-width:0 !important; }
+[data-dsh-on-phone-header] [class*="_headerActions"] { flex:none !important; margin-left:0 !important; padding:0 !important; gap:0 !important; }
+[data-dsh-on-phone-header] [class*="_headerActions"] button { padding:0 !important; }
+[data-dsh-on-phone-header] [data-dsh-token-monitor-session-cost] { margin-right:0 !important; }
+[data-dsh-on-phone-header] [class*="_headerActions"] [class*="_triggerLabel"] { display:none !important; }
+[data-dsh-on-phone-header] [class*="_headerActions"] span[class*="_label"] { font-size:0 !important; }
+/* Usage cost (¥) stays a desktop concern; the phone hides it entirely. */
+[data-dsh-on-phone-header] [data-dsh-token-monitor-session-cost] { display:none !important; }
+/* Items the layer appends to the app's ··· menu on the phone surface. */
+[data-dsh-on-phone-more-item] {
+  display:flex !important;
+  align-items:center !important;
+  gap:8px !important;
+  box-sizing:border-box !important;
+  width:100% !important;
+  padding:9px 14px !important;
+  border:0 !important;
+  background:transparent !important;
+  color:inherit !important;
+  font:inherit !important;
+  font-size:13px !important;
+  line-height:18px !important;
+  text-align:left !important;
+  white-space:nowrap !important;
+  cursor:pointer !important;
+}
+/* Every header control sits on one centered line with a uniform hit height. */
+[data-dsh-on-phone-header] [class*="_titleRow"] { align-items:center !important; }
+[data-dsh-on-phone-header] :is([class*="_headerActions"],[class*="_headerUtilities"],[class*="_titleCluster"]) { align-items:center !important; height:28px !important; }
+[data-dsh-on-phone-header] [class*="_headerUtilities"] button {
+  align-self:center !important;
+  box-sizing:border-box !important;
+  height:28px !important;
+  min-height:28px !important;
+}
+[data-dsh-on-phone-header] [class*="_moreButton"] { width:28px !important; min-width:28px !important; }
+/* Status dock: hidden until the header pill opens it as a floating card.
+   The doubled attribute matches the base grid rule's specificity so this later
+   hide wins the cascade. */
+[data-dsh-on-phone-center] [data-dsh-on-phone-dock][data-dsh-on-phone-dock] { display:none !important; }
+[data-dsh-on-phone-center][data-dsh-on-phone-dock-open="true"] [data-composer-card] ~ [class*="_dock"] {
+  display:grid !important;
+  position:fixed !important;
+  left:10px !important;
+  right:10px !important;
+  bottom:calc(env(safe-area-inset-bottom) + 112px) !important;
+  z-index:150 !important;
+  margin:0 !important;
+  padding:10px 12px !important;
+  background:var(--dsw-alias-bg-layer-1,#fff) !important;
+  border:1px solid rgb(15 23 42 / 10%) !important;
+  border-radius:16px !important;
+  box-shadow:0 12px 40px rgb(15 23 42 / 22%) !important;
+}
+[data-dsh-on-phone-dock-toggle] {
+  flex:none !important;
+  box-sizing:border-box !important;
+  width:auto !important;
+  min-width:44px !important;
+  height:28px !important;
+  min-height:28px !important;
+  padding:0 8px !important;
+  border:0 !important;
+  border-radius:14px !important;
+  background:var(--dsw-alias-interactive-bg-subtle,rgb(15 23 42 / 6%)) !important;
+  color:var(--dsw-text,#171a21) !important;
+  font-size:11px !important;
+  font-weight:600 !important;
+  cursor:pointer !important;
+}
+[data-dsh-on-phone-center][data-dsh-on-phone-dock-open="true"] [data-dsh-on-phone-dock-toggle] { background:var(--dsw-alias-interactive-bg-selected,rgb(15 23 42 / 14%)) !important; }
+/* Sidebar quick entries (new-session row + global panels) collapse to one row. */
+[data-dsh-on-phone-sidebar-root][data-dsh-on-phone-panels="collapsed"] :is([class*="_newSession"],[class*="_panelList"]) { display:none !important; }
+[data-dsh-on-phone-panels-toggle] {
+  display:flex !important;
+  align-items:center !important;
+  gap:6px !important;
+  box-sizing:border-box !important;
+  width:calc(100% - 16px) !important;
+  margin:2px 8px !important;
+  padding:6px 8px !important;
+  border:0 !important;
+  border-radius:8px !important;
+  background:transparent !important;
+  color:inherit !important;
+  font:inherit !important;
+  font-size:12px !important;
+  text-align:left !important;
+  cursor:pointer !important;
+}
+[data-dsh-on-phone-panels-toggle]::after { content:"▾"; margin-left:auto; transition:transform var(--dsh-on-phone-motion-duration,160ms) ease; }
+[data-dsh-on-phone-sidebar-root][data-dsh-on-phone-panels="collapsed"] [data-dsh-on-phone-panels-toggle]::after { transform:rotate(-90deg); }
+@media (prefers-reduced-motion:reduce) { [data-dsh-on-phone-panels-toggle]::after { transition:none !important; } }
 `
 
 /* Locate the native mobile surface so it can be installed without re-reading the layout. */
@@ -741,6 +872,51 @@ export function isMenuSearchFocus(target: Element): boolean {
 }
 
 /** Add mobile semantics without replacing feature trees. */
+/**
+ * Fold the header's secondary controls into the app's ··· (更多操作) menu.
+ * The menu is React-rendered in a portal, so its content cannot be declared
+ * up front: each sync pass tags each open menu once and appends phone items
+ * that forward clicks to the (visually hidden) header controls. React tears
+ * the menu down when it closes, so the tag never needs cleaning.
+ */
+export function augmentMoreMenu(): void {
+  const header = document.querySelector('[data-dsh-on-phone-header]')
+  if (header === null) return
+  // Only the header's own ··· trigger may receive the items: other app menus
+  // (bottom panel, cell menus, …) render the same [role="menu"] portal shape,
+  // and augmenting them leaked the three items into those popups too.
+  const moreButton = Array.from(header.querySelectorAll('button'))
+    .find(button => (button.getAttribute('aria-label') || '') === '更多操作')
+  if (moreButton === undefined || moreButton.getAttribute('aria-expanded') !== 'true') return
+  const moves = [
+    { label: '用 访达 打开', pick: (): HTMLElement | null => header.querySelector<HTMLElement>('[class*="_menuAnchor"] button') },
+    { label: '底部面板', pick: (): HTMLElement | null => header.querySelector<HTMLElement>('[data-dsh-bottom-toggle]') },
+    { label: '打开右侧边栏', pick: (): HTMLElement | null => header.querySelector<HTMLElement>('[data-sidebar-right-expand]') },
+  ].filter(entry => entry.pick() !== null)
+  if (moves.length === 0) return
+  for (const menu of Array.from(document.querySelectorAll<HTMLElement>('[role="menu"]'))) {
+    if (menu.dataset.dshOnPhoneAugmented === 'true') continue
+    if (menu.querySelector('[role="menuitem"]') === null) continue
+    menu.dataset.dshOnPhoneAugmented = 'true'
+    for (const entry of moves) {
+      const item = document.createElement('button')
+      item.type = 'button'
+      item.setAttribute('role', 'menuitem')
+      item.dataset.dshOnPhoneMoreItem = 'true'
+      item.setAttribute('aria-label', entry.label)
+      item.textContent = entry.label
+      item.addEventListener('click', () => {
+        entry.pick()?.click()
+        // The app's own menu items close the menu as a side effect of the
+        // selection; a forwarded click has no such plumbing, so ask for the
+        // standard dismissal explicitly.
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+      })
+      menu.append(item)
+    }
+  }
+}
+
 export function installNativeMobileSurface(): () => void {
   document.documentElement.classList.add('dsh-native-mobile-active')
   const setInputMode = (mode: 'keyboard' | 'touch'): void => {
@@ -1156,6 +1332,25 @@ export function installNativeMobileSurface(): () => void {
       }
       const composerCard = center.querySelector<HTMLElement>('[data-composer-card]')
       const composerRow = composerCard?.querySelector<HTMLElement>(':scope > [data-input-scroll]')?.nextElementSibling
+      // Status dock under the composer: tagged so the CSS can keep it hidden
+      // behind the header pill (phone surface density pass).
+      if (composerCard !== null) {
+        let sibling = composerCard.nextElementSibling
+        while (sibling !== null && !(sibling instanceof HTMLElement && classToken(sibling, '_dock'))) sibling = sibling.nextElementSibling
+        if (sibling instanceof HTMLElement) sibling.dataset.dshOnPhoneDock = 'true'
+      }
+      // Header pill that opens the dock as a floating card. The app re-renders
+      // its utilities cluster, so the pill is (re-)inserted whenever missing.
+      const headerForDock = center.querySelector<HTMLElement>('[data-dsh-on-phone-header]')
+      const utilities = headerForDock?.querySelector<HTMLElement>('[class*="_headerUtilities"]')
+      if (utilities !== null && utilities !== undefined && utilities.querySelector('[data-dsh-on-phone-dock-toggle]') === null) {
+        const dockToggle = document.createElement('button')
+        dockToggle.type = 'button'
+        dockToggle.dataset.dshOnPhoneDockToggle = 'true'
+        dockToggle.setAttribute('aria-label', '会话统计')
+        dockToggle.textContent = '统计'
+        utilities.prepend(dockToggle)
+      }
       if (composerRow instanceof HTMLElement) {
         composerRow.dataset.dshOnPhoneComposerRow = 'true'
         const groups = Array.from(composerRow.children).filter((child): child is HTMLElement => child instanceof HTMLElement)
@@ -1196,6 +1391,7 @@ export function installNativeMobileSurface(): () => void {
         firstByClassSuffix(content, '_options')?.setAttribute('data-dsh-on-phone-settings-options', 'true')
       }
     }
+    augmentMoreMenu()
     if (sidebar === undefined) return
     sidebar.dataset.dshOnPhoneSidebar = 'true'
     toggle = firstByClassSuffix(sidebar, '_toggle') as HTMLButtonElement | undefined
@@ -1208,6 +1404,21 @@ export function installNativeMobileSurface(): () => void {
       if (brand.textContent?.trim() === 'DSH Local Build') brand.textContent = 'DeepSeek Harness'
     }
     if (toggle !== undefined) toggle.dataset.dshOnPhoneToggle = 'true'
+    // Quick entries (new-session row + global panels) collapse behind one row;
+    // collapsed by default — the brand row still starts a session. The toggle
+    // row is re-inserted whenever the app's re-render dropped it.
+    if (sidebarRoot.dataset.dshOnPhonePanels === undefined) sidebarRoot.dataset.dshOnPhonePanels = 'collapsed'
+    if (sidebarRoot.querySelector('[data-dsh-on-phone-panels-toggle]') === null) {
+      const panelList = firstByClassSuffix(sidebarRoot, '_panelList')
+      if (panelList !== undefined) {
+        const panelsToggle = document.createElement('button')
+        panelsToggle.type = 'button'
+        panelsToggle.dataset.dshOnPhonePanelsToggle = 'true'
+        panelsToggle.setAttribute('aria-label', '折叠或展开快捷入口')
+        panelsToggle.textContent = '快捷入口'
+        panelList.before(panelsToggle)
+      }
+    }
     const collapsed = classToken(sidebarRoot, '_collapsed')
     sidebar.dataset.open = String(!collapsed)
     setBackdropOpen(!collapsed)
@@ -1256,6 +1467,24 @@ export function installNativeMobileSurface(): () => void {
     ],
   })
   backdrop.addEventListener('click', () => { if (sidebar?.dataset.open === 'true') toggle?.click() })
+  // Delegated toggles for the density pass (dock pill, sidebar quick-entry
+  // collapse). Delegation survives the app's continuous re-renders.
+  const onSurfaceToggleClick = (event: Event): void => {
+    const target = event.target instanceof Element ? event.target : null
+    if (target === null) return
+    const dockToggle = target.closest('[data-dsh-on-phone-dock-toggle]')
+    if (dockToggle !== null) {
+      const center = dockToggle.closest<HTMLElement>('[data-dsh-on-phone-center]')
+      if (center !== null) center.dataset.dshOnPhoneDockOpen = center.dataset.dshOnPhoneDockOpen === 'true' ? 'false' : 'true'
+      return
+    }
+    const panelsToggle = target.closest('[data-dsh-on-phone-panels-toggle]')
+    if (panelsToggle !== null) {
+      const root = panelsToggle.closest<HTMLElement>('[data-dsh-on-phone-sidebar-root]')
+      if (root !== null) root.dataset.dshOnPhonePanels = root.dataset.dshOnPhonePanels === 'collapsed' ? 'open' : 'collapsed'
+    }
+  }
+  document.addEventListener('click', onSurfaceToggleClick)
   // The terminal drops the space and punctuation keys a soft keyboard reports as
   // a bare legacy IME keydown; the repair writes them into xterm's textarea. See
   // {@link installTerminalKeyRepair}.
@@ -1291,6 +1520,8 @@ export function installNativeMobileSurface(): () => void {
     removePageTiming()
     removePageFetchGuard()
     document.removeEventListener('click', onBranchClick, true)
+    document.removeEventListener('click', onSurfaceToggleClick)
+    document.querySelectorAll('[data-dsh-on-phone-dock-toggle],[data-dsh-on-phone-panels-toggle]').forEach(node => node.remove())
     document.removeEventListener('click', onSidebarSessionSelect, true)
     document.removeEventListener('pointerdown', onPointerDownForFocus, true)
     document.removeEventListener('focusin', onFocusIn, true)
