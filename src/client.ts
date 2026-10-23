@@ -116,6 +116,30 @@ export function isPhoneDevice(query: (queryString: string) => boolean): boolean 
   return query('(hover: none)') && query('(pointer: coarse)')
 }
 
+/** Below this viewport width the stock layout's narrow mode degrades badly. */
+export const NARROW_PHONE_BREAKPOINT = 1024
+
+/**
+ * Final call: should this document install the phone surface?
+ *
+ * Yes for real touch devices, and — regardless of pointer kind — for any web
+ * window narrower than the stock narrow breakpoint, because the host's own
+ * narrow mode (overlay drawer, clamped widths) renders unusably there: buttons
+ * clip, the drawer covers the viewport and edge controls stop receiving
+ * clicks. The privileged desktop shell keeps its desktop chrome at any width.
+ */
+export function shouldUsePhoneSurface(input: {
+  surface: 'desktop' | 'mobile'
+  preview: boolean
+  width: number
+  protocol: string
+  query: (queryString: string) => boolean
+}): boolean {
+  if (input.preview) return true
+  if (input.surface === 'desktop' && input.protocol === DSH_DESKTOP_PROTOCOL) return false
+  return isPhoneDevice(input.query) || input.width < NARROW_PHONE_BREAKPOINT
+}
+
 /** Privileged scheme the official DSH desktop application serves its window from. */
 const DSH_DESKTOP_PROTOCOL = 'dsh-app:'
 
@@ -942,22 +966,26 @@ export function apply(ctx: ClientContext): void {
   ctx.effect(() => {
     // The desktop window (dsh-app://app/) reaches this module too, so an
     // origin-based guess must never be allowed to install the phone layer there.
-    const desktop = resolveClientSurface({
-      protocol: location.protocol,
-      hostname: location.hostname,
-      search: location.search,
-      trustedGateway: window.__DSH_ON_PHONE_TRUSTED_GATEWAY__ === true,
-      dedicatedFrontend: window.__DSH_ON_PHONE_FRONTEND__,
-    }) === 'desktop'
     // Non-desktop origins still reach this module from desktop BROWSERS (a
-    // laptop opening the Tailscale/gateway address). Only an actual touch
-    // device gets the phone layer; every other surface renders the host's
-    // stock styles plus the local control entry. The ?dsh-on-phone-preview
-    // escape hatch keeps forcing the phone layer for previews and debugging.
+    // laptop opening the Tailscale/gateway address): a fine-pointer device at
+    // full width keeps the stock styles. But a web window narrower than the
+    // stock narrow breakpoint gets the phone layer too — the host's own narrow
+    // mode renders unusably there. ?dsh-on-phone-preview keeps forcing it.
     const search = new URLSearchParams(location.search)
     const previewRequested = search.has('dsh-on-phone-preview') || search.has('dsh-mobile-preview')
-    const phone = previewRequested || isPhoneDevice(query => window.matchMedia(query).matches)
-    const mobileSurface = !desktop && phone
+    const mobileSurface = shouldUsePhoneSurface({
+      surface: resolveClientSurface({
+        protocol: location.protocol,
+        hostname: location.hostname,
+        search: location.search,
+        trustedGateway: window.__DSH_ON_PHONE_TRUSTED_GATEWAY__ === true,
+        dedicatedFrontend: window.__DSH_ON_PHONE_FRONTEND__,
+      }),
+      preview: previewRequested,
+      width: window.innerWidth,
+      protocol: location.protocol,
+      query: query => window.matchMedia(query).matches,
+    })
     const style = element('style'); style.dataset.plugin = 'dsh-on-phone'; style.textContent = mobileSurface
       ? NATIVE_MOBILE_STYLES
       : CONTROL_STYLES

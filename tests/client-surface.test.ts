@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isPhoneDevice, resolveClientSurface } from '../src/client.js'
+import { isPhoneDevice, NARROW_PHONE_BREAKPOINT, resolveClientSurface, shouldUsePhoneSurface } from '../src/client.js'
 
 const surface = (input: Partial<Parameters<typeof resolveClientSurface>[0]>): string =>
   resolveClientSurface({ protocol: 'http:', hostname: '127.0.0.1', search: '', trustedGateway: false, dedicatedFrontend: undefined, ...input })
@@ -59,5 +59,21 @@ describe('client surface selection', () => {
     // Touch-screen laptop: hover exists -> still desktop.
     const touchscreenLaptop = (q: string): boolean => q === '(pointer: coarse)'
     expect(isPhoneDevice(touchscreenLaptop)).toBe(false)
+  })
+
+  it('serves the phone layer to narrow web windows but never to the desktop shell', () => {
+    const fine = (q: string): boolean => !(q === '(hover: none)' || q === '(pointer: coarse)')
+    const call = (over: Partial<Parameters<typeof shouldUsePhoneSurface>[0]>): boolean =>
+      shouldUsePhoneSurface({ surface: 'mobile', preview: false, width: 1600, protocol: 'http:', query: fine, ...over })
+    // A desktop browser in a narrow window gets the phone layer: the stock
+    // narrow mode clips buttons and covers the viewport.
+    expect(call({ surface: 'desktop', width: NARROW_PHONE_BREAKPOINT - 1 })).toBe(true)
+    expect(call({ surface: 'desktop', width: NARROW_PHONE_BREAKPOINT })).toBe(false)
+    // The privileged desktop shell keeps its chrome at any width.
+    expect(call({ surface: 'desktop', protocol: 'dsh-app:', width: NARROW_PHONE_BREAKPOINT - 1 })).toBe(false)
+    // Touch devices and the preview hatch stay phone, at any width.
+    const coarse = (q: string): boolean => q === '(hover: none)' || q === '(pointer: coarse)'
+    expect(call({ query: coarse, width: 1600 })).toBe(true)
+    expect(call({ preview: true, width: 1600, protocol: 'dsh-app:' })).toBe(true)
   })
 })
