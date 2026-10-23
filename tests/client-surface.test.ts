@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { resolveClientSurface } from '../src/client.js'
+import { isPhoneDevice, resolveClientSurface } from '../src/client.js'
 
 const surface = (input: Partial<Parameters<typeof resolveClientSurface>[0]>): string =>
   resolveClientSurface({ protocol: 'http:', hostname: '127.0.0.1', search: '', trustedGateway: false, dedicatedFrontend: undefined, ...input })
@@ -45,5 +45,19 @@ describe('client surface selection', () => {
 
   it('does not treat an unrelated marker value as the gateway frontend', () => {
     expect(surface({ protocol: 'dsh-app:', hostname: 'app', dedicatedFrontend: 'stock' })).toBe('desktop')
+  })
+
+  it('requires an actual touch device before installing the phone layer', () => {
+    // A desktop browser reaching DSH through the gateway/tailscale origin is
+    // still a desktop: fine pointer, hover available. The origin heuristic
+    // alone installed the density layer inside that browser after a restart.
+    const desktopBrowser = (q: string): boolean => !(q === '(hover: none)' || q === '(pointer: coarse)')
+    expect(isPhoneDevice(desktopBrowser)).toBe(false)
+    // Phone: no hover, coarse (finger) pointer.
+    const phone = (q: string): boolean => q === '(hover: none)' || q === '(pointer: coarse)'
+    expect(isPhoneDevice(phone)).toBe(true)
+    // Touch-screen laptop: hover exists -> still desktop.
+    const touchscreenLaptop = (q: string): boolean => q === '(pointer: coarse)'
+    expect(isPhoneDevice(touchscreenLaptop)).toBe(false)
   })
 })

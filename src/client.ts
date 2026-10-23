@@ -103,6 +103,19 @@ function isLoopbackHost(hostname: string): boolean {
   return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1' || hostname === '[::1]'
 }
 
+/**
+ * Whether the browser runs on an actual touch device (phone or tablet).
+ *
+ * The network-path heuristics above only classify the *origin*: a desktop
+ * browser that reaches DSH through the LAN gateway or Tailscale Serve is still
+ * a desktop — pointer, hover and full-size layout — and must keep the host's
+ * own rendering. Media queries answer that directly: phones report no hover
+ * and a coarse (finger) primary pointer; desktops report a fine pointer.
+ */
+export function isPhoneDevice(query: (queryString: string) => boolean): boolean {
+  return query('(hover: none)') && query('(pointer: coarse)')
+}
+
 /** Privileged scheme the official DSH desktop application serves its window from. */
 const DSH_DESKTOP_PROTOCOL = 'dsh-app:'
 
@@ -936,11 +949,20 @@ export function apply(ctx: ClientContext): void {
       trustedGateway: window.__DSH_ON_PHONE_TRUSTED_GATEWAY__ === true,
       dedicatedFrontend: window.__DSH_ON_PHONE_FRONTEND__,
     }) === 'desktop'
-    const style = element('style'); style.dataset.plugin = 'dsh-on-phone'; style.textContent = desktop
-      ? CONTROL_STYLES
-      : NATIVE_MOBILE_STYLES
+    // Non-desktop origins still reach this module from desktop BROWSERS (a
+    // laptop opening the Tailscale/gateway address). Only an actual touch
+    // device gets the phone layer; every other surface renders the host's
+    // stock styles plus the local control entry. The ?dsh-on-phone-preview
+    // escape hatch keeps forcing the phone layer for previews and debugging.
+    const search = new URLSearchParams(location.search)
+    const previewRequested = search.has('dsh-on-phone-preview') || search.has('dsh-mobile-preview')
+    const phone = previewRequested || isPhoneDevice(query => window.matchMedia(query).matches)
+    const mobileSurface = !desktop && phone
+    const style = element('style'); style.dataset.plugin = 'dsh-on-phone'; style.textContent = mobileSurface
+      ? NATIVE_MOBILE_STYLES
+      : CONTROL_STYLES
     document.head.append(style)
-    if (!desktop) {
+    if (mobileSurface) {
       const removeCustom = installCustomAssets()
       const removeSurface = installNativeMobileSurface()
       // The strand lives in the app's session class, not in the DOM: while a
